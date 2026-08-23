@@ -75,6 +75,7 @@ label {
 input,
 select {
   width: 100%;
+  min-width: 0;
   padding: 12px;
   font-size: 1rem;
   background: var(--bg);
@@ -91,11 +92,13 @@ select:focus {
 
 .row {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
 }
 
 .row > * {
-  flex: 1;
+  flex: 1 1 140px;
+  min-width: 0;
 }
 
 button {
