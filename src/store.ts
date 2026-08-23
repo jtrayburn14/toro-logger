@@ -2,6 +2,8 @@ export interface ListeningEntry {
   uid: string;
   date: string;
   minutes: number;
+  /** when this was actually logged — lets the desktop resolve latest-wins */
+  logged_at?: string;
 }
 
 export interface ReadingEntry {
@@ -9,6 +11,7 @@ export interface ReadingEntry {
   date: string;
   book_title: string;
   completion_pct: number;
+  logged_at?: string;
 }
 
 export interface BookDraft {
@@ -89,7 +92,12 @@ export function addListening(date: string, minutesRaw: string): string | null {
   if (!date) return "Pick a date.";
   if (!Number.isFinite(minutes) || minutes <= 0)
     return "Minutes must be a positive number.";
-  state.listening.push({ uid: uid(), date, minutes: Math.round(minutes) });
+  state.listening.push({
+    uid: uid(),
+    date,
+    minutes: Math.round(minutes),
+    logged_at: new Date().toISOString(),
+  });
   save();
   return null;
 }
@@ -110,6 +118,7 @@ export function addReading(
     date,
     book_title,
     completion_pct: Math.round(pct * 10) / 10,
+    logged_at: new Date().toISOString(),
   });
   save();
   return null;
