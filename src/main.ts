@@ -7,6 +7,7 @@ import {
   getState,
   importCatalog,
   todayIso,
+  yesterdayIso,
 } from "./store";
 import { ParseError, buildSyncFile, parseCatalog, shareOrDownload } from "./sync";
 
@@ -52,8 +53,9 @@ function renderReading() {
     .join("");
 }
 
-$("l-date").setAttribute("value", todayIso());
-$("r-date").setAttribute("value", todayIso());
+// you log yesterday's sessions — default both date fields to yesterday
+input("l-date").value = yesterdayIso();
+input("r-date").value = yesterdayIso();
 
 $("listening-form").addEventListener("submit", (ev) => {
   ev.preventDefault();
@@ -95,7 +97,10 @@ $("book-form").addEventListener("submit", (ev) => {
 
 $("export-btn").addEventListener("click", async () => {
   const s = getState();
-  const result = await shareOrDownload("toro-sync.json", buildSyncFile(s));
+  const result = await shareOrDownload(
+    `toro-sync-${todayIso()}.json`,
+    buildSyncFile(s),
+  );
   if (result === "cancelled") {
     setStatus("sync-status", "", "plain");
     return;

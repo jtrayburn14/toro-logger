@@ -65,22 +65,33 @@ export async function shareOrDownload(
 
 export class ParseError extends Error {}
 
+function isBookDraft(b: unknown): b is BookDraft {
+  if (!b || typeof b !== "object") return false;
+  const o = b as Record<string, unknown>;
+  return (
+    typeof o.title === "string" &&
+    Number.isFinite(o.total_pages) &&
+    Number.isFinite(o.total_words) &&
+    typeof o.difficulty === "string"
+  );
+}
+
 /** reads only the desktop-owned `books` catalog; ignores everything else */
 export function parseCatalog(text: string): BookDraft[] {
+  // Google Drive / iOS exports sometimes prepend a BOM — strip it
   let file: SyncFile;
   try {
-    file = JSON.parse(text) as SyncFile;
+    file = JSON.parse(text.replace(/^\uFEFF/, "").trim()) as SyncFile;
   } catch {
     throw new ParseError("Not valid JSON — is this toro-sync.json?");
   }
-  if (!file || typeof file !== "object" || !Array.isArray(file.books))
-    throw new ParseError('No "books" array found.');
-  return file.books.filter((b) => {
-    return (
-      typeof b?.title === "string" &&
-      Number.isFinite(b?.total_pages) &&
-      Number.isFinite(b?.total_words) &&
-      typeof b?.difficulty === "string"
-    );
-  });
+  if (!file || typeof file !== "object")
+    throw new ParseError("Unexpected file contents.");
+  if (Array.isArray(file.books)) return file.books.filter(isBookDraft);
+  // a sync file from our own exporter always carries books; tolerate an
+  // empty catalog rather than hard-failing on a family-resembling file
+  if (Array.isArray(file.listening) && Array.isArray(file.reading)) return [];
+  throw new ParseError(
+    `No "books" array found (file keys: ${Object.keys(file).join(", ") || "none"}).`,
+  );
 }

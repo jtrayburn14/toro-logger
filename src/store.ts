@@ -62,11 +62,21 @@ export function save(): void {
   localStorage.setItem(KEY, JSON.stringify(state));
 }
 
-export function todayIso(): string {
-  const d = new Date();
+function isoOf(d: Date): string {
   const mm = String(d.getMonth() + 1).padStart(2, "0");
   const dd = String(d.getDate()).padStart(2, "0");
   return `${d.getFullYear()}-${mm}-${dd}`;
+}
+
+export function todayIso(): string {
+  return isoOf(new Date());
+}
+
+/** you always log yesterday's sessions — this is the sensible default */
+export function yesterdayIso(): string {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  return isoOf(d);
 }
 
 function uid(): string {
