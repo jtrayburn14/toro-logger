@@ -38,6 +38,31 @@ export function download(filename: string, contents: string): void {
   URL.revokeObjectURL(url);
 }
 
+export type ShareResult = "shared" | "downloaded" | "cancelled";
+
+/**
+ * iOS: hands the file to the share sheet ("Save to Drive" is one tap).
+ * Falls back to a plain download where the Share API can't take files.
+ */
+export async function shareOrDownload(
+  filename: string,
+  contents: string,
+): Promise<ShareResult> {
+  const file = new File([contents], filename, { type: "application/json" });
+  if (navigator.canShare?.({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: "Toro sync" });
+      return "shared";
+    } catch (e) {
+      if (e instanceof DOMException && e.name === "AbortError")
+        return "cancelled"; // user dismissed the sheet
+      // share failed oddly — fall through to download
+    }
+  }
+  download(filename, contents);
+  return "downloaded";
+}
+
 export class ParseError extends Error {}
 
 /** reads only the desktop-owned `books` catalog; ignores everything else */

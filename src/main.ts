@@ -8,7 +8,7 @@ import {
   importCatalog,
   todayIso,
 } from "./store";
-import { ParseError, buildSyncFile, download, parseCatalog } from "./sync";
+import { ParseError, buildSyncFile, parseCatalog, shareOrDownload } from "./sync";
 
 const $ = <T extends HTMLElement>(id: string): T =>
   document.getElementById(id) as T;
@@ -93,15 +93,18 @@ $("book-form").addEventListener("submit", (ev) => {
   renderBooks();
 });
 
-$("export-btn").addEventListener("click", () => {
+$("export-btn").addEventListener("click", async () => {
   const s = getState();
-  download(
-    "toro-sync.json",
-    buildSyncFile(s),
-  );
+  const result = await shareOrDownload("toro-sync.json", buildSyncFile(s));
+  if (result === "cancelled") {
+    setStatus("sync-status", "", "plain");
+    return;
+  }
   setStatus(
     "sync-status",
-    `Exported ${s.listening.length} listening, ${s.reading.length} reading, ${s.booksNew.length} new book(s). Save it to Drive.`,
+    result === "shared"
+      ? "Handed off — pick Save to Drive."
+      : `Exported ${s.listening.length} listening, ${s.reading.length} reading, ${s.booksNew.length} new book(s). Save it to Drive.`,
     "ok",
   );
 });
